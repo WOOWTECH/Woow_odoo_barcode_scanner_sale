@@ -52,8 +52,9 @@ class SaleOrder(models.Model):
                 }
             }
 
-        # product_info['product'] is already a product.product record
+        # product_info['product'] is a product.product record
         product = product_info['product']
+        product_id = product.id if hasattr(product, 'id') else int(product)
 
         # Check auto-increment setting
         auto_increment = self.env['ir.config_parameter'].sudo().get_param(
@@ -62,18 +63,18 @@ class SaleOrder(models.Model):
 
         # Look for existing line with this product
         existing_line = self.order_line.filtered(
-            lambda l: l.product_id.id == product.id and not l.display_type
+            lambda l: l.product_id.id == product_id and not l.display_type
         )
 
         if existing_line and auto_increment:
             # Increment quantity on existing line
             existing_line = existing_line[0]
             existing_line.product_uom_qty += 1
-            return self._get_scan_success_notification(product, existing_line, incremented=True)
+            return self._get_scan_success_notification(product_id, existing_line, incremented=True)
         else:
             # Create new line
             new_line = self._add_product_line(product, product_info.get('gs1_data', {}))
-            return self._get_scan_success_notification(product, new_line, incremented=False)
+            return self._get_scan_success_notification(product_id, new_line, incremented=False)
 
     def _add_product_line(self, product, gs1_data=None):
         """Add a new sales order line for the product.
@@ -87,32 +88,35 @@ class SaleOrder(models.Model):
         """
         self.ensure_one()
 
+        # Ensure we have a valid product ID (integer)
+        product_id = product.id if hasattr(product, 'id') else int(product)
+
         # Prepare line values
         line_vals = {
             'order_id': self.id,
-            'product_id': product.id,
+            'product_id': product_id,
             'product_uom_qty': gs1_data.get('quantity', 1) if gs1_data else 1,
         }
 
         # Create the line - this will trigger onchange to set name, price, etc.
         new_line = self.env['sale.order.line'].create(line_vals)
 
-        # Trigger product change to populate default values
-        new_line.product_id_change()
-
         return new_line
 
-    def _get_scan_success_notification(self, product, line, incremented=False):
+    def _get_scan_success_notification(self, product_id, line, incremented=False):
         """Generate success notification for scanned product.
 
         Args:
-            product: product.product record
+            product_id: int, product ID
             line: sale.order.line record
             incremented: bool, whether quantity was incremented
 
         Returns:
             dict: Notification data
         """
+        # Get product record
+        product = self.env['product.product'].browse(product_id)
+
         # Check if stock info should be shown
         show_stock = self.env['ir.config_parameter'].sudo().get_param(
             'barcode_scanner.show_stock_info', 'True'
