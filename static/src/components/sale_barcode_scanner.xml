@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="barcode_scanner_sale.ScannerAction">
+        <div class="o_barcode_scanner_sale h-100 d-flex flex-column">
+            <!-- Header -->
+            <div class="o_scanner_header bg-primary text-white p-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0">
+                        <i class="fa fa-barcode me-2"/>
+                        Barcode Scanner
+                    </h4>
+                    <small t-if="state.orderName" class="opacity-75">
+                        Order: <t t-esc="state.orderName"/>
+                    </small>
+                </div>
+                <button type="button" class="btn btn-light btn-sm" t-on-click="close">
+                    <i class="fa fa-times me-1"/>
+                    Close
+                </button>
+            </div>
+
+            <!-- Main Content -->
+            <div class="o_scanner_content flex-grow-1 p-4">
+                <t t-if="state.isLoading">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </t>
+
+                <t t-else="">
+                    <!-- Scan Button -->
+                    <div class="text-center mb-4">
+                        <button type="button"
+                                class="btn btn-primary btn-lg"
+                                t-on-click="openScanner">
+                            <i class="fa fa-camera me-2"/>
+                            Open Camera Scanner
+                        </button>
+                        <p class="text-muted mt-2 small">
+                            Click to open the camera and scan product barcodes
+                        </p>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">
+                            <i class="fa fa-info-circle me-1"/>
+                            How to use:
+                        </h6>
+                        <ol class="mb-0 small">
+                            <li>Click "Open Camera Scanner" above</li>
+                            <li>Point your camera at a product barcode or QR code</li>
+                            <li>The product will be automatically added to the order</li>
+                            <li>Scan the same product again to increase quantity</li>
+                        </ol>
+                    </div>
+
+                    <!-- Scanned Products List -->
+                    <t t-if="state.scannedProducts.length > 0">
+                        <div class="mt-4">
+                            <h6>Recently Scanned:</h6>
+                            <div class="list-group">
+                                <t t-foreach="state.scannedProducts.slice().reverse()" t-as="item" t-key="item.timestamp">
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong t-esc="item.name"/>
+                                            <br/>
+                                            <small class="text-muted font-monospace" t-esc="item.barcode"/>
+                                        </div>
+                                        <small class="text-muted" t-esc="item.timestamp"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+            </div>
+
+            <!-- Footer -->
+            <div class="o_scanner_footer bg-light p-3 border-top">
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted small">
+                        <i class="fa fa-keyboard-o me-1"/>
+                        Tip: You can also use a USB barcode scanner
+                    </span>
+                    <span class="text-muted small" t-if="state.scannedProducts.length > 0">
+                        <t t-esc="state.scannedProducts.length"/> item(s) scanned
+                    </span>
+                </div>
+            </div>
+        </div>
+    </t>
+
+</templates>

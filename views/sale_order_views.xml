@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Extend Sale Order Form View with Barcode Scanner Button -->
+    <record id="sale_order_form_view_barcode_scanner" model="ir.ui.view">
+        <field name="name">sale.order.form.barcode_scanner</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!-- Add barcode scanner button in header -->
+            <xpath expr="//header" position="inside">
+                <button name="action_open_barcode_scanner"
+                        string="Scan Barcode"
+                        type="object"
+                        class="btn-secondary"
+                        icon="fa-barcode"
+                        invisible="state in ('cancel', 'done')"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Menu Item for Product Barcodes (from base module) -->
+    <menuitem id="menu_product_barcode"
+              name="Product Barcodes"
+              parent="sale.menu_sales_config"
+              action="barcode_scanner_base.product_barcode_action"
+              sequence="25"/>
+
+</odoo>
