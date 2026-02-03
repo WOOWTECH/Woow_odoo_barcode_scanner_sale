@@ -52,9 +52,24 @@ class SaleOrder(models.Model):
                 }
             }
 
-        # product_info['product'] is a product.product record
-        product = product_info['product']
-        product_id = product.id if hasattr(product, 'id') else int(product)
+        # product_info['product'] can be a dict (serialized) or recordset
+        product_data = product_info['product']
+
+        # Extract product_id from dict or recordset
+        if isinstance(product_data, dict):
+            product_id = product_data.get('id')
+        elif hasattr(product_data, 'id'):
+            product_id = product_data.id
+        else:
+            product_id = int(product_data)
+
+        if not product_id:
+            return {
+                'warning': {
+                    'title': _('Product Error'),
+                    'message': _('Could not determine product ID'),
+                }
+            }
 
         # Check auto-increment setting
         auto_increment = self.env['ir.config_parameter'].sudo().get_param(
@@ -73,23 +88,20 @@ class SaleOrder(models.Model):
             return self._get_scan_success_notification(product_id, existing_line, incremented=True)
         else:
             # Create new line
-            new_line = self._add_product_line(product, product_info.get('gs1_data', {}))
+            new_line = self._add_product_line(product_id, product_info.get('gs1_data', {}))
             return self._get_scan_success_notification(product_id, new_line, incremented=False)
 
-    def _add_product_line(self, product, gs1_data=None):
+    def _add_product_line(self, product_id, gs1_data=None):
         """Add a new sales order line for the product.
 
         Args:
-            product: product.product record
+            product_id: int, product ID
             gs1_data: dict with parsed GS1 data (optional)
 
         Returns:
             sale.order.line record
         """
         self.ensure_one()
-
-        # Ensure we have a valid product ID (integer)
-        product_id = product.id if hasattr(product, 'id') else int(product)
 
         # Prepare line values
         line_vals = {
